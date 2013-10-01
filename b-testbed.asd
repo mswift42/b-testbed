@@ -8,7 +8,8 @@
   :depends-on (#:drakma
                #:hunchentoot
                #:cl-who
-               #:inferior-shell)
+               #:inferior-shell
+	       #:cl-ppcre)
   :components ((:file "package")
                (:file "b-testbed")))
 
