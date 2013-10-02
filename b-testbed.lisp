@@ -292,7 +292,7 @@
 
 
 (defun show-wiki (term)
-  (let* ((string (drakma:http-request term))
+  (let* ((string (drakma:http-request (join "http://en.wikipedia.org/wiki/" term)))
 	 (document (chtml:parse string (cxml-stp:make-builder))))
     (stp:do-recursively (a document)
       (when (and (typep a 'stp:element)
