@@ -279,10 +279,27 @@
   (start *web-server*))
 
 
+(defparameter *wiki*
+  "http://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=lisp&format=xml&gsrprop=snippet&prop=info&inprop=jsonfm")
+
+(defun wiki-info (term)
+  (drakma:http-request term))
+
+(defun wiki-search (term)
+  (drakma:http-request (join "http://en.wikipedia.org/wiki/" term)))
 
 
 
 
+(defun show-wiki (term)
+  (let* ((string (drakma:http-request term))
+	 (document (chtml:parse string (cxml-stp:make-builder))))
+    (stp:do-recursively (a document)
+      (when (and (typep a 'stp:element)
+		 (equal (stp:local-name a) "div")
+		 (equal (stp:attribute-value a "id") "bodyContent"))
+	(format t "~A:~%~A~%"
+		(stp:string-value a)
+ 		(stp:attribute-value a "class"))))))
 
-;;; "b-testbed" goes here. Hacks and glory await!
 
