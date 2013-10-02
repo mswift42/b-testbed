@@ -9,7 +9,9 @@
                #:hunchentoot
                #:cl-who
                #:inferior-shell
-	       #:cl-ppcre)
+	       #:cl-ppcre
+	       #:cxml-stp
+	       #:closure-html)
   :components ((:file "package")
                (:file "b-testbed")))
 
