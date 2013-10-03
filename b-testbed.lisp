@@ -280,7 +280,7 @@
 
 
 (defparameter *wiki*
-  "http://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=lisp&format=json&gsrprop=snippet&prop=info&inprop=jsonfm")
+  "http://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=lisp&format=json&gsrprop=snippet&prop=extracts&inprop=jsonfm")
 
 (defun wiki-info (term)
   (drakma:http-request term))
@@ -290,8 +290,11 @@
 
 
 
-(defparameter *base*
-  "http://en.wikipedia.org/w/api.php?action=parse&page=Pramface&format=json&prop=text&section=0")
+(defparameter *pram-test*
+  "http://en.wikipedia.org/w/api.php?action=parse&page=Pramface&format=json&prop=text&section=1")
+
+(defparameter *pr2*
+  (caddr (cl-json:decode-json-from-source (wiki-info *pram-test*))))
 
 ;(setq drakma:*header-stream* nil)
 (setq drakma:*text-content-types* (cons '("application" . "json")
