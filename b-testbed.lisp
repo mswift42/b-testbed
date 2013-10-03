@@ -280,7 +280,7 @@
 
 
 (defparameter *wiki*
-  "http://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=lisp&format=xml&gsrprop=snippet&prop=info&inprop=jsonfm")
+  "http://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=lisp&format=json&gsrprop=snippet&prop=info&inprop=jsonfm")
 
 (defun wiki-info (term)
   (drakma:http-request term))
@@ -289,20 +289,11 @@
   (drakma:http-request (join "http://en.wikipedia.org/wiki/" term)))
 
 
-(defun show-wiki (term)
-  (let* ((string (drakma:http-request (join "http://en.wikipedia.org/wiki/" term)))
-	 (document (chtml:parse string (cxml-stp:make-builder))))
-    (stp:do-recursively (a document)
-      (when (and (typep a 'stp:element)
-		 (equal (stp:local-name a) "div")
-		 (equal (stp:attribute-value a "id") "bodyContent"))
-	(format t "~A:~%"
-		(stp:string-value a))))))
 
 (defparameter *base*
-  "http://en.wikipedia.org/w/api.php?action=parse&page=Baseball&format=json&prop=text&section=0")
+  "http://en.wikipedia.org/w/api.php?action=parse&page=Pramface&format=json&prop=text&section=0")
 
-(setq drakma:*header-stream* nil)
+;(setq drakma:*header-stream* nil)
 (setq drakma:*text-content-types* (cons '("application" . "json")
 drakma:*text-content-types*))
  
