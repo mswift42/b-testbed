@@ -10,7 +10,7 @@
                #:cl-who
                #:inferior-shell
 	       #:cl-ppcre
-	       #:yason)
+	       #:cl-json)
   :components ((:file "package")
                (:file "b-testbed")))
 
