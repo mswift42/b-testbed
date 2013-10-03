@@ -10,8 +10,7 @@
                #:cl-who
                #:inferior-shell
 	       #:cl-ppcre
-	       #:cxml-stp
-	       #:closure-html)
+	       #:yason)
   :components ((:file "package")
                (:file "b-testbed")))
 
