@@ -278,9 +278,10 @@
   (bt:make-thread (lambda () (run/s *refresh*)))
   (start *web-server*))
 
-
+(setq drakma:*text-content-types* (cons '("application" . "json")
+					drakma:*text-content-types*))
 (defparameter *wiki*
-  "http://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=lisp&format=json&gsrprop=snippet&prop=extracts&inprop=jsonfm")
+  "http://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=lisp&format=json&gsrprop=snippet&prop=extracts&inprop=jsonfm&section=1")
 
 (defun wiki-info (term)
   (drakma:http-request term))
@@ -291,14 +292,13 @@
 
 
 (defparameter *pram-test*
-  "http://en.wikipedia.org/w/api.php?action=parse&page=Pramface&format=json&prop=text&section=1")
+  "http://en.wikipedia.org/w/api.php?action=parse&prop=extracts&titles=Pramface&format=json&section=1")
 
-(defparameter *pr2*
-  (caddr (cl-json:decode-json-from-source (wiki-info *pram-test*))))
+(defparameter pr2
+  (cl-json:decode-json-from-string (wiki-info *pram-test*)))
 
 ;(setq drakma:*header-stream* nil)
-(setq drakma:*text-content-types* (cons '("application" . "json")
-drakma:*text-content-types*))
+
  
 
 
