@@ -7,6 +7,9 @@
 (defparameter *iplayer-command*
   "get_iplayer --nocopyright --limitmatches 50 --listformat \"<index> <pid> <thumbnail> <name> <episode>\"")
 
+(defun join (&rest args)
+  (concatenate 'string args))
+
 ;; All programmes which have been downloaded and are older than 30
 ;; days have to be deleted. get-iplayer records the date of every
 ;; download and prints a notice if a recorded programme > 30 days
@@ -76,8 +79,7 @@
 (push (create-static-file-dispatcher-and-handler
        "/first.css" "second.css") *dispatch-table*)
 
-(defmacro join (string &rest args)
-  `(concatenate 'string ,string ,@args))
+
 
 
 (defmacro page-template ((&key title) &body body)
@@ -271,7 +273,7 @@
 
 
 (defparameter *refresh*
-  "get-iplayer --refresh")
+  "get_iplayer --refresh")
 
 (defun main ()
   "refresh get-iplayer index and start hunchentoot"
@@ -287,17 +289,22 @@
   (drakma:http-request term))
 
 (defun wiki-search (term)
-  (drakma:http-request (join "http://en.wikipedia.org/wiki/" term)))
+  (cl-json:decode-json-from-string
+   (drakma:http-request (join "http://en.wikipedia.org/w/api.php?action=parse&page="
+			      term
+			      "&format=json&section=1"))))
 
 
 
 (defparameter *pram-test*
-  "http://en.wikipedia.org/w/api.php?action=parse&prop=extracts&titles=Pramface&format=json&section=1")
+  "http://en.wikipedia.org/w/api.php?action=parse&page=Pramface&format=xml&section=1")
 
-(defparameter pr2
-  (cl-json:decode-json-from-string (wiki-info *pram-test*)))
+;; (defparameter pr2
+;;   (cl-json:decode-json-from-string (wiki-info *pram-test*)))
 
 ;(setq drakma:*header-stream* nil)
+
+
 
  
 
