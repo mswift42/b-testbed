@@ -7,8 +7,8 @@
 (defparameter *iplayer-command*
   "get_iplayer --nocopyright --limitmatches 50 --listformat \"<index> <pid> <thumbnail> <name> <episode>\"")
 
-(defun join (&rest args)
-  (concatenate 'string args))
+(defmacro join (string &rest args)
+  `(concatenate 'string ,string ,@args))
 
 ;; All programmes which have been downloaded and are older than 30
 ;; days have to be deleted. get-iplayer records the date of every
@@ -265,6 +265,28 @@
 	  (all-matches-as-strings "flashhigh1=[0-9]*" string)
 	  (all-matches-as-strings "flashlow1=[0-9]*" string)))
 
+(define-easy-handler (test-modes :uri "/test-modes"
+				 :default-request-type :both)
+    ((mode :parameter-type 'string)
+     (index))
+  (page-template
+      (:title "test-modes")
+    (loop for i in *categories* do
+	 (htm (:a :class "ms" :href (join "/" i) (str i))))
+    (:br)
+    (:br)
+    (:h3 :id "header" "TEST-MODES")
+    (:tr
+     (:td "modes:")
+     (:td (:select :name "Download Modes"
+		   (loop for (value option) in '((:a 'a)
+				     (:b 'b)
+				     (:c 'c))
+			 do (htm
+			     (:option :value value
+				      :selected (eq value mode)
+				      (str option)))))))))
+
 
 ;; Assigning a parameter to hunchentoot instance to facilitate
 ;; stopping the server.
@@ -297,12 +319,12 @@
 
 
 (defparameter *pram-test*
-  "http://en.wikipedia.org/w/api.php?action=parse&page=Pramface&format=xml&section=1")
+  "http://en.wikipedia.org/w/api.php?action=parse&page=Pramface&format=json&section=1")
 
-;; (defparameter pr2
-;;   (cl-json:decode-json-from-string (wiki-info *pram-test*)))
+(defparameter pr2
+  (cl-json:decode-json-from-string (wiki-info *pram-test*)))
 
-;(setq drakma:*header-stream* nil)
+(setq drakma:*header-stream* nil)
 
 
 
