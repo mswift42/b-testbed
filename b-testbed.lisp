@@ -47,7 +47,7 @@
 		     (join *iplayer-command* " " term))))
 	(if (old-recordings-p result)
 	    (butlast (all-matches-as-strings "[0-9A-Z].*" result
-					     :start (first (old-recordings-p result))))
+			     :start (first (old-recordings-p result))))
 	    (butlast
 	     (all-matches-as-strings "[0-9].*"
 				     result))))))
@@ -70,7 +70,7 @@
 
 (defun iplayer-download-command (index)
   "concatenate index to download command"
-  (join "get_iplayer -g --nocopyright --output=\"$HOME/Videos\"" " " index " --flvstreamer /usr/bin/flvstreamer")) ;; the --flvstreamer part
+  (join "get_iplayer -g --nocopyright --output=\"$HOME/Videos\"" " " index )) ;; the --flvstreamer part
 ;; is only needed with some versions of rtmpdump, that do not work with
 ;; iplayer's site. If you have a 'vanilla' version of rtmpdump installed
 ;; you can delete this.
@@ -218,7 +218,7 @@
 (defun display-image-and-info (index)
   "for given index display title, long description,
    thumbnail and download-link."
-  (destructuring-bind (thumb desc title)
+  (destructuring-bind (thumb desc title modes)
       (load-thumbnail-for-index index)
     (with-html-output (*standard-output* nil)
       (:div :class "infotitle"
@@ -226,6 +226,9 @@
       (:div :class "infothumb"
 	    (:img :src thumb))
       (:a :class "download" :href (get-download-url index) "Download")
+      (dolist (i modes)
+	(htm
+	 (:p (str i))))
       (:div :class "iplayerinfo"
 	    (:p (fmt desc))))))
 
@@ -248,7 +251,8 @@
 						 "desc:.*" ind))))
 	  (first (all-matches-as-strings "[A-Z0-9].*"
 					 (first (all-matches-as-strings
-						 "title:.*" ind)))))))
+						 "title:.*" ind))))
+	  (append-index-to-mode (download-modes ind) index))))
 
 (defun get-url (index)
   "return /info url string concatenated with the index"
@@ -265,10 +269,13 @@
 	  (all-matches-as-strings "flashhigh1=[0-9]*" string)
 	  (all-matches-as-strings "flashlow1=[0-9]*" string)))
 
+(defun append-index-to-mode (list index)
+   "prepend index to every download mode"
+   (mapcar #'(lambda (x) (join index x)) list))
+
 (define-easy-handler (test-modes :uri "/test-modes"
 				 :default-request-type :both)
-    ((mode :parameter-type 'string)
-     (index))
+    ((mode :parameter-type 'string))
   (page-template
       (:title "test-modes")
     (loop for i in *categories* do
@@ -315,6 +322,7 @@
    (drakma:http-request (join "http://en.wikipedia.org/w/api.php?action=parse&page="
 			      term
 			      "&format=json&section=1"))))
+
 
 
 
