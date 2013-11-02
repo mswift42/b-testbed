@@ -6,7 +6,6 @@
 ;; (get_iplayer --listformat "<index> <pid>") -> "1233 pn0232323"
 (defparameter *iplayer-command*
   "get_iplayer --nocopyright --limitmatches 50 --listformat \"<index> <pid> <thumbnail> <name> <episode>\"")
-
 (defmacro join (string &rest args)
   `(concatenate 'string ,string ,@args))
 
@@ -226,11 +225,17 @@
       (:div :class "infothumb"
 	    (:img :src thumb))
       (:a :class "download" :href (get-download-url index) "Download")
-      (dolist (i modes)
-	(htm
-	 (:p (str i))))
+      (:td (:select :name "Modes"
+		    (loop for i
+			 in modes
+			 do (htm
+			     (:option :value i
+				      :selected (eq i index)
+				      (str i))))))
       (:div :class "iplayerinfo"
 	    (:p (fmt desc))))))
+
+
 
 (defun get-download-url (index)
   "return url address for entered programme"
@@ -254,6 +259,9 @@
 						 "title:.*" ind))))
 	  (append-index-to-mode (download-modes ind) index))))
 
+
+
+
 (defun get-url (index)
   "return /info url string concatenated with the index"
   (join "/info?index=" index ))
@@ -264,9 +272,9 @@
 
 (defun download-modes (string)
   "build list of possible download-modes for a given index."
-  (append (all-matches-as-strings "flashhd1=[0-9]*" string)
-	  (all-matches-as-strings "flashvhigh1=[0-9]*" string)
+  (append (all-matches-as-strings "flashvhigh1=[0-9]*" string)
 	  (all-matches-as-strings "flashhigh1=[0-9]*" string)
+	  (all-matches-as-strings "flashhd1=[0-9]*" string)
 	  (all-matches-as-strings "flashlow1=[0-9]*" string)))
 
 (defun append-index-to-mode (list index)
@@ -322,7 +330,6 @@
    (drakma:http-request (join "http://en.wikipedia.org/w/api.php?action=parse&page="
 			      term
 			      "&format=json&section=1"))))
-
 
 
 
