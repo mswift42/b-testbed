@@ -1,4 +1,4 @@
-;;;; b-testbed.lisp
+ ;;;; b-testbed.lisp
 
 (in-package #:b-testbed)
 
@@ -6,8 +6,10 @@
 ;; (get_iplayer --listformat "<index> <pid>") -> "1233 pn0232323"
 (defparameter *iplayer-command*
   "get_iplayer --nocopyright --limitmatches 50 --listformat \"<index> <pid> <thumbnail> <name> <episode>\"")
+
 (defmacro join (string &rest args)
   `(concatenate 'string ,string ,@args))
+
 
 ;; All programmes which have been downloaded and are older than 30
 ;; days have to be deleted. get-iplayer records the date of every
@@ -78,11 +80,18 @@
 (push (create-static-file-dispatcher-and-handler
        "/first.css" "second.css") *dispatch-table*)
 
+(defmacro with-html-string (&body body)
+  `(with-html-output-to-string (*standard-output* nil :prologue t)
+     ,@body))
+
+(defmacro with-html (&body body)
+  `(with-html-output (*standard-output* nil)
+     ,@body))
 
 
 
 (defmacro page-template ((&key title) &body body)
-  `(with-html-output-to-string (*standard-output* nil :prologue t)
+  `(with-html-string
      (:html
        (:head
         (:title ,title)
@@ -95,7 +104,7 @@
 			     :default-request-type :both)
     ((searchterm :parameter-type 'string))
   (page-template
-      (:title "iplayer search")
+      (:title "i(player search")
     (loop for i in *categories* do
 	 (htm (:a :class "ms" :href (join "/" i) (str i))))
     (:br)
@@ -118,10 +127,10 @@
    in 2 columns."
   (cond
     ((null list)
-     (with-html-output (*standard-output* nil)
+     (with-html
        (:p "No matches found.")))
     ((all-matches *delete-string* (first list))
-     (with-html-output (*standard-output* nil)
+     (with-html
        (:div :id "rtable"
 	(loop for i in (butlast list) do
 	 (htm
@@ -131,7 +140,7 @@
      (let ((imgs (mapcar #'get-thumb-from-search list))
 	   (desc (mapcar #'get-title-and-episode list))
 	   (ind  (mapcar #'get-index-from-search list)))
-    (with-html-output (*standard-output* nil)
+    (with-html
       (:div :id "rtable"
 	    (loop for i in imgs and  a from 0 do 
 		 (htm
@@ -165,29 +174,49 @@
 (category-template "/sport" sport "Sport")
 (category-template "/thriller" thriller "Thriller")
 
-(define-easy-handler (info :uri "/info")
-    (index)
+(define-easy-handler (info :uri "/info" :default-request-type :both)
+    (index mode)
+  (destructuring-bind (thumb desc title modes)
+      (load-thumbnail-for-index index)
   (page-template
    (:title "Info")
+
    (loop for i in *categories* do
 	(htm (:a :class "ms" :href (join "/" i) (str i))))
       (:h3 :id "header" "Info")
-      (display-image-and-info index))) 
+      (:div :class "infotitle"
+	    (:p (str title)))
+      (:div :class "infothumb"
+	    (:img :src thumb))
+      (:div (:form :method :post
+		   (:select :name "mode" (dolist (i modes)
+			      (htm (:option :value i
+				    :selected (setf mode i)
+				    (str i)
+					    ))))))
+      
+      (:a :class "download" :href (get-download-url index mode) "Download")
+      (:div :class "iplayerinfo"
+	    (:p (fmt desc)))
+      )))
 
 (define-easy-handler (download :uri "/download")
     (index)
+  
     (page-template
 	(:title "Download")
-      (with-html-output (*standard-output* nil)
+      (with-html
 	(:p "Downloading: " (str index))
+	(fmt "~{~A ~}" (get-parameters*))
 	(:a :class "ms" :href (get-kill-url index) "Cancel"))
-      (download-index index)))
+      (download-index (join (first (all-matches-as-strings "^[0-9]*" index))
+			    (first (all-matches-as-strings "flash[a-z0-9]*" index))))))
 
 (define-easy-handler (kd :uri "/kt")
     (index)
   (page-template
       (:title "")
-    (with-html-output (*standard-output* nil)
+    (with-html
       (:p "Stopping download of : " (str index))
       (kill-download *active-downloads*)
       (sleep 2)
@@ -214,32 +243,14 @@
     (setf  *active-downloads* thread-1)))
 
 
-(defun display-image-and-info (index)
-  "for given index display title, long description,
-   thumbnail and download-link."
-  (destructuring-bind (thumb desc title modes)
-      (load-thumbnail-for-index index)
-    (with-html-output (*standard-output* nil)
-      (:div :class "infotitle"
-	    (:p (fmt title)))
-      (:div :class "infothumb"
-	    (:img :src thumb))
-      (:a :class "download" :href (get-download-url index) "Download")
-      (:td (:select :name "Modes"
-		    (loop for i
-			 in modes
-			 do (htm
-			     (:option :value i
-				      :selected (eq i index)
-				      (str i))))))
-      (:div :class "iplayerinfo"
-	    (:p (fmt desc))))))
+(defun get-download-post (mode)
+  (join "/download?index=" "mode="(first (all-matches-as-strings "[a-z].*" mode))))
 
 
-
-(defun get-download-url (index)
+(defun get-download-url (index mode)
   "return url address for entered programme"
-  (join "/download?index=" index))
+  (let ((qual (first (all-matches-as-strings "flash[a-z0-9]*" mode))))
+    (join "/download?index=" index "modes=" qual)))
 
 (defun get-kill-url (index)
   "return string with /kt concatanated with index"
@@ -258,7 +269,6 @@
 					 (first (all-matches-as-strings
 						 "title:.*" ind))))
 	  (append-index-to-mode (download-modes ind) index))))
-
 
 
 
@@ -281,26 +291,6 @@
    "prepend index to every download mode"
    (mapcar #'(lambda (x) (join index x)) list))
 
-(define-easy-handler (test-modes :uri "/test-modes"
-				 :default-request-type :both)
-    ((mode :parameter-type 'string))
-  (page-template
-      (:title "test-modes")
-    (loop for i in *categories* do
-	 (htm (:a :class "ms" :href (join "/" i) (str i))))
-    (:br)
-    (:br)
-    (:h3 :id "header" "TEST-MODES")
-    (:tr
-     (:td "modes:")
-     (:td (:select :name "Download Modes"
-		   (loop for (value option) in '((:a 'a)
-				     (:b 'b)
-				     (:c 'c))
-			 do (htm
-			     (:option :value value
-				      :selected (eq value mode)
-				      (str option)))))))))
 
 
 ;; Assigning a parameter to hunchentoot instance to facilitate
