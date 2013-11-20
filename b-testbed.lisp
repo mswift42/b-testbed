@@ -80,6 +80,9 @@
 (push (create-static-file-dispatcher-and-handler
        "/first.css" "second.css") *dispatch-table*)
 
+;; set html-mode for cl-who:
+
+
 (defmacro with-html-string (&body body)
   `(with-html-output-to-string (*standard-output* nil :prologue t)
      ,@body))
@@ -104,7 +107,7 @@
 			     :default-request-type :both)
     ((searchterm :parameter-type 'string))
   (page-template
-      (:title "i(player search")
+      (:title "iplayer search")
     (loop for i in *categories* do
 	 (htm (:a :class "ms" :href (join "/" i) (str i))))
     (:br)
@@ -175,7 +178,7 @@
 (category-template "/thriller" thriller "Thriller")
 
 (define-easy-handler (info :uri "/info" :default-request-type :both)
-    (index mode)
+    (index mode radiomode)
   (destructuring-bind (thumb desc title modes)
       (load-thumbnail-for-index index)
   (page-template
@@ -188,16 +191,21 @@
 	    (:p (str title)))
       (:div :class "infothumb"
 	    (:img :src thumb))
-      (:div (:form :method :post
-		   (:select :name "mode" (dolist (i modes)
-			      (htm (:option :value i
-				    :selected (setf mode i)
-				    (str i)
-					    ))))))
+      (:div (:form :method "post"
+		   (:select :name "mode" :value mode
+			    (dolist (i modes)
+			      (with-html
+				   (:option (str i)
+					      :selected (string-equal i mode)
+					      :name "mode"))))
+		   (:input :type "submit" :name "mode" )))
+      (fmt "~{~A ~}" (post-parameters*))
       
-      (:a :class "download" :href (get-download-url index mode) "Download")
+      (:a :class "download" :href (get-download-url index (or mode radiomode)) "Download")
       (:div :class "iplayerinfo"
 	    (:p (fmt desc)))
+      (fmt "~{~A ~}" (post-parameters*))
+      (fmt "~{~A ~}" (get-parameters*))
       )))
 
 (define-easy-handler (download :uri "/download")
@@ -209,7 +217,7 @@
 	(:p "Downloading: " (str index))
 	(fmt "~{~A ~}" (get-parameters*))
 	(:a :class "ms" :href (get-kill-url index) "Cancel"))
-      (download-index (join (first (all-matches-as-strings "^[0-9]*" index))
+      (download-index (join (first (all-matches-as-strings "^[0-9]*" index)) " "
 			    (first (all-matches-as-strings "flash[a-z0-9]*" index))))))
 
 (define-easy-handler (kd :uri "/kt")
@@ -250,7 +258,7 @@
 (defun get-download-url (index mode)
   "return url address for entered programme"
   (let ((qual (first (all-matches-as-strings "flash[a-z0-9]*" mode))))
-    (join "/download?index=" index "modes=" qual)))
+    (join "/download?index=" index "?modes=" qual)))
 
 (defun get-kill-url (index)
   "return string with /kt concatanated with index"
