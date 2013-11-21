@@ -177,8 +177,13 @@
 (category-template "/sport" sport "Sport")
 (category-template "/thriller" thriller "Thriller")
 
+(defun quality-from-mode (mode)
+  "Return the quality description of the mode-string.
+   (quality-from-mode '987flashvhigh1=2332' -> flashvhigh "
+  (first (all-matches-as-strings "flash[a-z]*" mode)))
+
 (define-easy-handler (info :uri "/info" :default-request-type :both)
-    (index mode radiomode)
+    (index mode )
   (destructuring-bind (thumb desc title modes)
       (load-thumbnail-for-index index)
   (page-template
@@ -191,34 +196,31 @@
 	    (:p (str title)))
       (:div :class "infothumb"
 	    (:img :src thumb))
-      (:div (:form :method "post"
-		   (:select :name "mode" :value mode
+      
+;      (:a :class "download" :href (get-download-url index mode) "Download")
+      (:div :class "modeform" (:form :method "post" :action "/download" 
+		   (:select :name "mode" :class "downloadbutton" :value mode
 			    (dolist (i modes)
 			      (with-html
-				   (:option (str i)
-					      :selected (string-equal i mode)
-					      :name "mode"))))
-		   (:input :type "submit" :name "mode" )))
-      (fmt "~{~A ~}" (post-parameters*))
-      
-      (:a :class "download" :href (get-download-url index (or mode radiomode)) "Download")
+				   (:option :name mode
+				    (:value (str i)
+					    (quality-from-mode i))))))
+		   (:input :type "submit" :class "downloadbutton" :value "Download" )))
       (:div :class "iplayerinfo"
 	    (:p (fmt desc)))
-      (fmt "~{~A ~}" (post-parameters*))
-      (fmt "~{~A ~}" (get-parameters*))
       )))
 
-(define-easy-handler (download :uri "/download")
-    (index)
+(define-easy-handler (download :uri "/download" :default-request-type :post)
+    (mode)
   
     (page-template
 	(:title "Download")
       (with-html
-	(:p "Downloading: " (str index))
-	(fmt "~{~A ~}" (get-parameters*))
-	(:a :class "ms" :href (get-kill-url index) "Cancel"))
-      (download-index (join (first (all-matches-as-strings "^[0-9]*" index)) " "
-			    (first (all-matches-as-strings "flash[a-z0-9]*" index))))))
+	(:p "Downloading: " (str mode))
+	(fmt "~{~A ~}" (post-parameters*))
+	(:a :class "ms" :href (get-kill-url mode) "Cancel"))
+      (download-index (join (first (all-matches-as-strings "^[0-9]*" (str mode))) " "
+			    (first (all-matches-as-strings "flash[a-z0-9]*" (str mode)))))))
 
 (define-easy-handler (kd :uri "/kt")
     (index)
@@ -290,8 +292,8 @@
 
 (defun download-modes (string)
   "build list of possible download-modes for a given index."
-  (append (all-matches-as-strings "flashvhigh1=[0-9]*" string)
-	  (all-matches-as-strings "flashhigh1=[0-9]*" string)
+  (append (all-matches-as-strings "flashhigh1=[0-9]*" string)
+	  (all-matches-as-strings "flashvhigh1=[0-9]*" string)
 	  (all-matches-as-strings "flashhd1=[0-9]*" string)
 	  (all-matches-as-strings "flashlow1=[0-9]*" string)))
 
