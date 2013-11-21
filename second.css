@@ -114,3 +114,22 @@ div.delete {
     clear:both;
     margin-top:80px;
     }
+
+.downloadbutton {
+    
+    padding:4px;
+    margin:9px;
+    background-color:#ff9800;
+    color:#202020;
+    border:2px solid;
+
+    }
+div.modeform {
+    float:right;
+    margin-right:8em;
+    clear:right;
+    position:relative;
+    margin-top:3em;
+
+    
+}
