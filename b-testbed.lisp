@@ -99,7 +99,8 @@
        (:head
         (:title ,title)
        (:link :type "text/css" :rel "stylesheet"
-	      :href "/first.css "))
+	      :href "/first.css ")
+       (:script :src "http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.0.3.min.js"))
       (:body ,@body))))
 
 ;; Start Page; search for programmes or visit category links
@@ -199,24 +200,24 @@
       
 ;      (:a :class "download" :href (get-download-url index mode) "Download")
       (:div :class "modeform" (:form :method "post" :action "/download" 
-		   (:select :name "mode" :class "downloadbutton" :value mode
+		   (:select :name "mode" :class "modelist" :value mode
 			    (dolist (i modes)
 			      (with-html
 				   (:option :name mode
-				    (:value (str i)
-					    (quality-from-mode i))))))
+				    (:value (str i))))))
 		   (:input :type "submit" :class "downloadbutton" :value "Download" )))
       (:div :class "iplayerinfo"
 	    (:p (fmt desc)))
-      )))
+      (:p (:script "$(document).ready(function() {$('.downloadbutton').select('#header').append
+                     ('<p>hallo du</p>');});")))))
 
-(define-easy-handler (download :uri "/download" :default-request-type :post)
+(define-easy-handler (download :uri "/download" :default-request-type :both)
     (mode)
   
     (page-template
 	(:title "Download")
       (with-html
-	(:p "Downloading: " (str mode))
+	(:p "Downloading: " mode)
 	(fmt "~{~A ~}" (post-parameters*))
 	(:a :class "ms" :href (get-kill-url mode) "Cancel"))
       (download-index (join (first (all-matches-as-strings "^[0-9]*" (str mode))) " "
@@ -249,9 +250,16 @@
    bt-threads."
   (let ((thread-1 (bt:make-thread (lambda ()
 				    (run/s (iplayer-download-command index)))
-				  :name (format nil "~A" index))))
+				  :name (format nil "~A" (first (all-matches-as-strings
+								 "^[0-9]*" index))))))
     (setf  *active-downloads* thread-1)))
 
+(defun index-and-mode (string)
+  "return a list with index of modestring and quality.
+   (index-and-mode '322flashvhigh1=444) -> '('322' 'flashvhigh1')"
+  (list
+   (first (all-matches-as-strings "^[0-9]*" string))
+   (first (all-matches-as-strings "flash[a-z0-9]*" string))))
 
 (defun get-download-post (mode)
   (join "/download?index=" "mode="(first (all-matches-as-strings "[a-z].*" mode))))
