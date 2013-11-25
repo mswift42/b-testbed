@@ -1,4 +1,4 @@
- ;;;; b-testbed.lisp
+;;;; b-testbed.lisp
 
 (in-package #:b-testbed)
 
@@ -76,10 +76,14 @@
 ;; iplayer's site. If you have a 'vanilla' version of rtmpdump installed
 ;; you can delete this.
 
+;; set doctype to html5:
+(setf (html-mode) :html5)
+
 ;; tell Hunchentoot which css file to use.
 (push (create-static-file-dispatcher-and-handler
        "/first.css" "second.css") *dispatch-table*)
-
+(push (create-static-file-dispatcher-and-handler
+       "/b-test.js" "b-test.js") *dispatch-table*)
 ;; set html-mode for cl-who:
 
 
@@ -100,7 +104,8 @@
         (:title ,title)
        (:link :type "text/css" :rel "stylesheet"
 	      :href "/first.css ")
-       (:script :src "http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.0.3.min.js"))
+       (:script :src "http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.0.3.min.js")
+       (:script :src "/b-test.js"))
       (:body ,@body))))
 
 ;; Start Page; search for programmes or visit category links
@@ -184,7 +189,7 @@
   (first (all-matches-as-strings "flash[a-z]*" mode)))
 
 (define-easy-handler (info :uri "/info" :default-request-type :both)
-    (index mode )
+    (index mode sel)
   (destructuring-bind (thumb desc title modes)
       (load-thumbnail-for-index index)
   (page-template
@@ -199,29 +204,31 @@
 	    (:img :src thumb))
       
 ;      (:a :class "download" :href (get-download-url index mode) "Download")
-      (:div :class "modeform" (:form :method "post" :action "/download" 
+      (:div :class "modeform" (:form :method "post" ;:action "/download" 
 		   (:select :name "mode" :class "modelist" :value mode
 			    (dolist (i modes)
 			      (with-html
-				   (:option :name mode
+				   (:option :name mode :selected sel
 				    (:value (str i))))))
-		   (:input :type "submit" :class "downloadbutton" :value "Download" )))
+		   (:a :href (get-download-url index mode) :class "downloadbutton"  "Download" )))
       (:div :class "iplayerinfo"
 	    (:p (fmt desc)))
-      (:p (:script "$(document).ready(function() {$('.downloadbutton').select('#header').append
-                     ('<p>hallo du</p>');});")))))
+      (:script "$(document).ready(function(){change_href('.modelist','.downloadbutton');});"))))
 
-(define-easy-handler (download :uri "/download" :default-request-type :both)
-    (mode)
+(define-easy-handler (download :uri "/download" :default-request-type :get)
+    (index )
   
     (page-template
 	(:title "Download")
       (with-html
-	(:p "Downloading: " mode)
-	(fmt "~{~A ~}" (post-parameters*))
-	(:a :class "ms" :href (get-kill-url mode) "Cancel"))
-      (download-index (join (first (all-matches-as-strings "^[0-9]*" (str mode))) " "
-			    (first (all-matches-as-strings "flash[a-z0-9]*" (str mode)))))))
+	(:p "Downloading: " (get-parameter index))
+	(fmt "~{~A ~}" (get-parameters*))
+	(:a :class "ms" :href (get-kill-url index) "Cancel")
+	;; (:p (str (join (first (all-matches-as-strings "^[0-9]*" (str index))) " "
+	;; 	       (first (all-matches-as-strings "flash[a-z0-9]*" (str index))))))
+	)
+      (download-index (join (first (all-matches-as-strings "^[0-9]*" (str index))) " "
+			    (first (all-matches-as-strings "flash[a-z0-9]*" (str index)))))))
 
 (define-easy-handler (kd :uri "/kt")
     (index)
