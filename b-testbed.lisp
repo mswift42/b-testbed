@@ -204,11 +204,13 @@
 	    (:img :src thumb))
       
 ;      (:a :class "download" :href (get-download-url index mode) "Download")
-      (:div :class "modeform" (:form :method "post" ;:action "/download" 
+      (:div :class "modeform"
+	    (:form :method "post"	;:action "/download" 
 		   (dolist (i modes)
-		     (with-html
-		       (:input :type "radio" :name "group1" :label (quality-from-mode i)
-				(:value (quality-from-mode i)))))
+		     (htm
+		      (:label :class "modelabel" (fmt "  ~A" (quality-from-mode i)))
+		      (:input :type "radio" :name "group1" :label (fmt "~A" i)
+			      :value (quality-from-mode i) )))
 		   (:a :href (get-download-url index mode) :class "downloadbutton" :id "downloadbutton" "Download" )))
       (:div :class "iplayerinfo"
 	    (:p (fmt desc)))
