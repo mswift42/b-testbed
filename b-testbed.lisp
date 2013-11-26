@@ -82,8 +82,8 @@
 ;; tell Hunchentoot which css file to use.
 (push (create-static-file-dispatcher-and-handler
        "/first.css" "second.css") *dispatch-table*)
-(push (create-static-file-dispatcher-and-handler
-       "/b-test.js" "b-test.js") *dispatch-table*)
+;; (push (create-static-file-dispatcher-and-handler
+;;        "/b-test.js" "b-test.js") *dispatch-table*)
 ;; set html-mode for cl-who:
 
 
@@ -104,8 +104,9 @@
         (:title ,title)
        (:link :type "text/css" :rel "stylesheet"
 	      :href "/first.css ")
-       (:script :src "http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.0.3.min.js")
-       (:script :src "/b-test.js"))
+       ;; (:script :src "http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.0.3.min.js")
+       ;; (:script :src "/b-test.js")
+       )
       (:body ,@body))))
 
 ;; Start Page; search for programmes or visit category links
@@ -204,13 +205,13 @@
 	   (:img :src thumb))
      (:div :class "modeform"
 	   (:form :method "post" :action (join "/download?index=" index)
-		  (:select :name "mode"
+		  (:select :name "mode" :class "buttons"
 			   (dolist (i modes)
 			     (htm
 			      (:option :value (quality-from-mode i)
 				       :selected (string-equal i mode)
 				       (str (quality-from-mode i))))))
-		  (:input :type "submit" )))
+		  (:input :type "submit" :value "Download" :class "buttons")))
      (:div :class "iplayerinfo"
 	   (:p (fmt desc))))))
 
