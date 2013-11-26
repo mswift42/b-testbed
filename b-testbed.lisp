@@ -69,9 +69,9 @@
   (all-matches-as-strings "^[0-9]*" string))
 
 
-(defun iplayer-download-command (index)
+(defun iplayer-download-command (index mode)
   "concatenate index to download command"
-  (join "get_iplayer -g --nocopyright --output=\"$HOME/Videos\"" " " index )) ;; the --flvstreamer part
+  (join "get_iplayer -g" " modes=" mode " --nocopyright --output=\"$HOME/Videos\"" " " index )) ;; the --flvstreamer part
 ;; is only needed with some versions of rtmpdump, that do not work with
 ;; iplayer's site. If you have a 'vanilla' version of rtmpdump installed
 ;; you can delete this.
@@ -189,48 +189,45 @@
   (first (all-matches-as-strings "flash[a-z]*" mode)))
 
 (define-easy-handler (info :uri "/info" :default-request-type :both)
-    (index mode sel)
+    (index mode)
   (destructuring-bind (thumb desc title modes)
       (load-thumbnail-for-index index)
-  (page-template
-   (:title "Info")
+    (page-template
+     (:title "Info")
 
-   (loop for i in *categories* do
-	(htm (:a :class "ms" :href (join "/" i) (str i))))
-      (:h3 :id "header" "Info")
-      (:div :class "infotitle"
-	    (:p (str title)))
-      (:div :class "infothumb"
-	    (:img :src thumb))
-      
-;      (:a :class "download" :href (get-download-url index mode) "Download")
-      (:div :class "modeform"
-	    (:form :method "post"	;:action "/download" 
-		   (dolist (i modes)
-		     (htm
-		      (:label :class "modelabel" (fmt "  ~A" (quality-from-mode i)))
-		      (:input :type "radio" :name "group1" :label (fmt "~A" i)
-			      :value (quality-from-mode i) )))
-		   (:a :href (get-download-url index mode) :class "downloadbutton" :id "downloadbutton" "Download" )))
-      (:div :class "iplayerinfo"
-	    (:p (fmt desc)))
-      (:script "man_href('modelist','downloadbutton');"))))
+     (loop for i in *categories* do
+	  (htm (:a :class "ms" :href (join "/" i) (str i))))
+     (:h3 :id "header" "Info")
+     (:div :class "infotitle"
+	   (:p (str title)))
+     (:div :class "infothumb"
+	   (:img :src thumb))
+     (:div :class "modeform"
+	   (:form :method "post" :action (join "/download?index=" index)
+		  (:select :name "mode"
+			   (dolist (i modes)
+			     (htm
+			      (:option :value (quality-from-mode i)
+				       :selected (string-equal i mode)
+				       (str (quality-from-mode i))))))
+		  (:input :type "submit" )))
+     (:div :class "iplayerinfo"
+	   (:p (fmt desc))))))
 
-(define-easy-handler (download :uri "/download" :default-request-type :get)
-    (index )
+(define-easy-handler (download :uri "/download" :default-request-type :both)
+    (index mode)
   
     (page-template
 	(:title "Download")
       (with-html
-	(:p "Downloading: " (get-parameter index))
-	(fmt "~{~A ~}" (get-parameters*))
-	(:a :class "ms" :href (get-kill-url index) "Cancel")
-	;; (:p (str (join (first (all-matches-as-strings "^[0-9]*" (str index))) " "
-	;; 	       (first (all-matches-as-strings "flash[a-z0-9]*" (str index))))))
-	)
-      ;; (download-index (join (first (all-matches-as-strings "^[0-9]*" (str index))) " "
-      ;; 			    (first (all-matches-as-strings "flash[a-z0-9]*" (str index)))))
-      ))
+	(:p "Downloading: " (str index))
+	(:p "Mode: " (str mode))
+	(:p "Index: " (str index))
+;	(fmt "~{~A ~}" (get-parameters*))
+	(fmt "~{~A ~}" (post-parameters*))
+	(:a :class "ms" :href (get-kill-url (str index)) "Cancel")
+	(download-index index mode)
+	(:p (str (join index  " modes=" mode "1"))))))
 
 (define-easy-handler (kd :uri "/kt")
     (index)
@@ -254,11 +251,11 @@
   (bt:destroy-thread name))
 
 
-(defun download-index (index)
+(defun download-index (index mode)
   "download get_iplayer programme by index, using
    bt-threads."
   (let ((thread-1 (bt:make-thread (lambda ()
-				    (run/s (iplayer-download-command index)))
+				    (run/s (iplayer-download-command index mode)))
 				  :name (format nil "~A" (first (all-matches-as-strings
 								 "^[0-9]*" index))))))
     (setf  *active-downloads* thread-1)))
