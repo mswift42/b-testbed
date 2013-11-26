@@ -133,3 +133,12 @@ div.modeform {
 
     
 }
+.buttons {
+    padding : 8px;
+    margin:1.1em;
+    border : 2px solid #ff9800;
+    border-radius:4px;
+    background-color:#ff9800;
+    color:#202020;
+    font-size:1.04em;
+    }
