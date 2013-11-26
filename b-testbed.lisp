@@ -205,15 +205,14 @@
       
 ;      (:a :class "download" :href (get-download-url index mode) "Download")
       (:div :class "modeform" (:form :method "post" ;:action "/download" 
-		   (:select :name "mode" :class "modelist" :value mode
-			    (dolist (i modes)
-			      (with-html
-				   (:option :name mode :selected sel
-				    (:value (str i))))))
-		   (:a :href (get-download-url index mode) :class "downloadbutton"  "Download" )))
+		   (dolist (i modes)
+		     (with-html
+		       (:input :type "radio" :name "group1" :label (quality-from-mode i)
+				(:value (quality-from-mode i)))))
+		   (:a :href (get-download-url index mode) :class "downloadbutton" :id "downloadbutton" "Download" )))
       (:div :class "iplayerinfo"
 	    (:p (fmt desc)))
-      (:script "$(document).ready(function(){change_href('.modelist','.downloadbutton');});"))))
+      (:script "man_href('modelist','downloadbutton');"))))
 
 (define-easy-handler (download :uri "/download" :default-request-type :get)
     (index )
@@ -227,8 +226,9 @@
 	;; (:p (str (join (first (all-matches-as-strings "^[0-9]*" (str index))) " "
 	;; 	       (first (all-matches-as-strings "flash[a-z0-9]*" (str index))))))
 	)
-      (download-index (join (first (all-matches-as-strings "^[0-9]*" (str index))) " "
-			    (first (all-matches-as-strings "flash[a-z0-9]*" (str index)))))))
+      ;; (download-index (join (first (all-matches-as-strings "^[0-9]*" (str index))) " "
+      ;; 			    (first (all-matches-as-strings "flash[a-z0-9]*" (str index)))))
+      ))
 
 (define-easy-handler (kd :uri "/kt")
     (index)
@@ -307,10 +307,14 @@
 
 (defun download-modes (string)
   "build list of possible download-modes for a given index."
-  (append (all-matches-as-strings "flashhigh1=[0-9]*" string)
-	  (all-matches-as-strings "flashvhigh1=[0-9]*" string)
-	  (all-matches-as-strings "flashhd1=[0-9]*" string)
-	  (all-matches-as-strings "flashlow1=[0-9]*" string)))
+  (remove-duplicates
+   (append (all-matches-as-strings "flashhigh1=[0-9]*" string)
+	   (all-matches-as-strings "flashvhigh1=[0-9]*" string)
+	   (all-matches-as-strings "flashhd1=[0-9]*" string)
+	   (all-matches-as-strings "flashlow1=[0-9]*" string))
+   :test #'string-equal))
+
+
 
 (defun append-index-to-mode (list index)
    "prepend index to every download mode"
@@ -332,29 +336,29 @@
   (bt:make-thread (lambda () (run/s *refresh*)))
   (start *web-server*))
 
-(setq drakma:*text-content-types* (cons '("application" . "json")
-					drakma:*text-content-types*))
-(defparameter *wiki*
-  "http://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=lisp&format=json&gsrprop=snippet&prop=extracts&inprop=jsonfm&section=1")
+;; (setq drakma:*text-content-types* (cons '("application" . "json")
+;; 					drakma:*text-content-types*))
+;; (defparameter *wiki*
+;;   "http://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=lisp&format=json&gsrprop=snippet&prop=extracts&inprop=jsonfm&section=1")
 
-(defun wiki-info (term)
-  (drakma:http-request term))
+;; (defun wiki-info (term)
+;;   (drakma:http-request term))
 
-(defun wiki-search (term)
-  (cl-json:decode-json-from-string
-   (drakma:http-request (join "http://en.wikipedia.org/w/api.php?action=parse&page="
-			      term
-			      "&format=json&section=1"))))
+;; (defun wiki-search (term)
+;;   (cl-json:decode-json-from-string
+;;    (drakma:http-request (join "http://en.wikipedia.org/w/api.php?action=parse&page="
+;; 			      term
+;; 			      "&format=json&section=1"))))
 
 
 
-(defparameter *pram-test*
-  "http://en.wikipedia.org/w/api.php?action=parse&page=Pramface&format=json&section=1")
+;; (defparameter *pram-test*
+;;   "http://en.wikipedia.org/w/api.php?action=parse&page=Pramface&format=json&section=1")
 
-(defparameter pr2
-  (cl-json:decode-json-from-string (wiki-info *pram-test*)))
+;; (defparameter pr2
+;;   (cl-json:decode-json-from-string (wiki-info *pram-test*)))
 
-(setq drakma:*header-stream* nil)
+;; (setq drakma:*header-stream* nil)
 
 
 
