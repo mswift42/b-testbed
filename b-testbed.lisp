@@ -1,4 +1,4 @@
-;;;; b-testbed.lisp
+
 
 (in-package #:b-testbed)
 
@@ -71,10 +71,12 @@
 
 (defun iplayer-download-command (index mode)
   "concatenate index to download command"
-  (join "get_iplayer -g" " modes=" mode " --nocopyright --output=\"$HOME/Videos\"" " " index )) ;; the --flvstreamer part
+  (join "get_iplayer " (format nil " modes=~A~A" mode "1 ")" -g  --nocopyright --output=\"$HOME/Videos\"" " " index)) ;; the --flvstreamer part
 ;; is only needed with some versions of rtmpdump, that do not work with
 ;; iplayer's site. If you have a 'vanilla' version of rtmpdump installed
 ;; you can delete this.
+
+
 
 ;; set doctype to html5:
 (setf (html-mode) :html5)
@@ -84,7 +86,7 @@
        "/first.css" "second.css") *dispatch-table*)
 ;; (push (create-static-file-dispatcher-and-handler
 ;;        "/b-test.js" "b-test.js") *dispatch-table*)
-;; set html-mode for cl-who:
+
 
 
 (defmacro with-html-string (&body body)
@@ -103,10 +105,7 @@
        (:head
         (:title ,title)
        (:link :type "text/css" :rel "stylesheet"
-	      :href "/first.css ")
-       ;; (:script :src "http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.0.3.min.js")
-       ;; (:script :src "/b-test.js")
-       )
+	      :href "/first.css "))
       (:body ,@body))))
 
 ;; Start Page; search for programmes or visit category links
@@ -257,8 +256,7 @@
    bt-threads."
   (let ((thread-1 (bt:make-thread (lambda ()
 				    (run/s (iplayer-download-command index mode)))
-				  :name (format nil "~A" (first (all-matches-as-strings
-								 "^[0-9]*" index))))))
+				  :name index)))
     (setf  *active-downloads* thread-1)))
 
 (defun index-and-mode (string)
