@@ -196,28 +196,29 @@
 				    (fmt (first (nth a desc)))))))) 
 	    (:div :class "clear" "&nbsp;")))))))
 
-(defmacro category-template (url cat header)
+(defmacro category-template (url cat header active)
   "macro for category links."
   `(define-easy-handler (,cat :uri ,url)
        ()
      (page-template
 	 (:title ,header)
-       (loop for i in *categories* do
-            (htm
-             (:a :class "ms" :href (join "/" (string-downcase (symbol-name i)))
-                 (str (symbol-name i)))))
+       ;; (loop for i in *categories* do
+       ;;      (htm
+       ;;       (:a :class "ms" :href (join "/" (string-downcase (symbol-name i)))
+       ;;           (str (symbol-name i)))))
+       (navbar ,active)
        (:h3 :id "header" ,header)
        (display-results (search-categories ,header)))))
 
-(category-template "/popular" popular "Popular")
-(category-template "/films" films "Films")
-(category-template "/highlights" highlights "Highlights")
-(category-template "/crime" crime "Crime")
-(category-template "/nature" nature "Nature")
-(category-template "/sitcom" sitcom "Sitcoms")
-(category-template "/sport" sport "Sport")
-(category-template "/thriller" thriller "Thriller")
-(category-template "/legal" legal "Legal")
+(category-template "/popular" popular "Popular" 'popular)
+(category-template "/films" films "Films" 'films)
+(category-template "/highlights" highlights "Highlights" 'highlights)
+(category-template "/crime" crime "Crime" 'crime)
+(category-template "/nature" nature "Nature" 'nature)
+(category-template "/sitcom" sitcom "Sitcoms" 'sitcom)
+(category-template "/sport" sport "Sport" 'sport)
+(category-template "/thriller" thriller "Thriller" 'thriller)
+(category-template "/legal" legal "Legal" 'legal)
 
 (defun quality-from-mode (mode)
   "Return the quality description of the mode-string.
@@ -231,10 +232,11 @@
     (page-template
      (:title "Info")
 
-     (loop for i in *categories* do
-	  (htm
-           (:a :class "ms" :href (join "/" (string-downcase (symbol-name i)))
-               (str (symbol-name i)))))
+     ;; (loop for i in *categories* do
+     ;;      (htm
+     ;;       (:a :class "ms" :href (join "/" (string-downcase (symbol-name i)))
+      ;;           (str (symbol-name i)))))
+      (navbar nil)
      (:h3 :id "header" "Info")
      (:div :class "infotitle"
 	   (:p (str title)))
