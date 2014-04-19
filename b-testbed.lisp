@@ -15,7 +15,7 @@
 ;; days have to be deleted. get-iplayer records the date of every
 ;; download and prints a notice if a recorded programme > 30 days
 ;; has not been deleted yet.
-(defparameter *delete-string*
+(defvar *delete-string*
   "These programmes should be deleted:")
 
 (defun old-recordings-p (string)
@@ -23,9 +23,10 @@
   (all-matches *delete-string* string))
 
 
+
 (defparameter *categories*
-  '("search" "popular" "highlights" "films" "nature"
-    "crime" "sitcom" "sport" "thriller"))
+  '(search popular highlights films nature
+    crime sitcom sport thriller legal))
 
 (defun search-categories (cat)
   "use get_iplayer to list all-programmes in a category."
@@ -84,6 +85,11 @@
 ;; tell Hunchentoot which css file to use.
 (push (create-static-file-dispatcher-and-handler
        "/first.css" "second.css") *dispatch-table*)
+(push (create-static-file-dispatcher-and-handler
+       "/bootstrap.css" "bootstrap.min.css") *dispatch-table*)
+(push (create-static-file-dispatcher-and-handler
+       "/beebster.css" "beebster.css") *dispatch-table*)
+
 ;; (push (create-static-file-dispatcher-and-handler
 ;;        "/b-test.js" "b-test.js") *dispatch-table*)
 
@@ -94,7 +100,7 @@
      ,@body))
 
 (defmacro with-html (&body body)
-  `(with-html-output (*standard-output* nil)
+  `(with-html-output (*standard-output* nil :indent t)
      ,@body))
 
 
@@ -105,8 +111,32 @@
        (:head
         (:title ,title)
        (:link :type "text/css" :rel "stylesheet"
-	      :href "/first.css "))
-      (:body ,@body))))
+	      :href "/first.css ")
+       (:link :type "text/css" :rel "stylesheet"
+              :href "/bootstrap.css")
+       (:link :type "text/css" :rel "stylesheet"
+              :href "/beebster.css"))
+       (:body ,@body))))
+
+(defun navbar (active)
+  (with-html
+    (:nav :class "navbar navbar-inverse navbar-fixed-top"
+          :role "navigation"
+          (:div :class "navbar-inner"
+                (:div :class "container-fluid"
+                      (:ul :class "nav navbar-nav navbar-left"
+                           (loop for i in *categories*
+                              do (if (eq active i)
+                                     (with-html
+                                       (:li :class "active"
+                                        (:a :href (join "/"
+                                                        (string-downcase (symbol-name i)))
+                                            (str (symbol-name i)))))
+                                    (with-html
+                                   (:li 
+                                        (:a :href (join "/"
+                                                     (string-downcase (symbol-name i)))
+                                         (str (symbol-name i))))) ))))))))
 
 ;; Start Page; search for programmes or visit category links
 (define-easy-handler (iplayer-search :uri "/search"
@@ -114,8 +144,11 @@
     ((searchterm :parameter-type 'string))
   (page-template
       (:title "iplayer search")
-    (loop for i in *categories* do
-	 (htm (:a :class "ms" :href (join "/" i) (str i))))
+    ;; (loop for i in *categories* do
+    ;;      (htm
+    ;;       (:a :class "ms" :href (join "/" (string-downcase (symbol-name i)))
+    ;;           (str (symbol-name i)))))
+    (navbar 'search)
     (:br)
     (:br)
     (:h3 :id "header" "Search")
@@ -170,7 +203,9 @@
      (page-template
 	 (:title ,header)
        (loop for i in *categories* do
-	 (htm (:a :class "ms" :href (join "/" i) (str i))))
+            (htm
+             (:a :class "ms" :href (join "/" (string-downcase (symbol-name i)))
+                 (str (symbol-name i)))))
        (:h3 :id "header" ,header)
        (display-results (search-categories ,header)))))
 
@@ -182,6 +217,7 @@
 (category-template "/sitcom" sitcom "Sitcoms")
 (category-template "/sport" sport "Sport")
 (category-template "/thriller" thriller "Thriller")
+(category-template "/legal" legal "Legal")
 
 (defun quality-from-mode (mode)
   "Return the quality description of the mode-string.
@@ -196,7 +232,9 @@
      (:title "Info")
 
      (loop for i in *categories* do
-	  (htm (:a :class "ms" :href (join "/" i) (str i))))
+	  (htm
+           (:a :class "ms" :href (join "/" (string-downcase (symbol-name i)))
+               (str (symbol-name i)))))
      (:h3 :id "header" "Info")
      (:div :class "infotitle"
 	   (:p (str title)))
